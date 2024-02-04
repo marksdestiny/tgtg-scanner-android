@@ -9,7 +9,7 @@ class BagsRepository {
     val items = MutableStateFlow<List<Bag>>(listOf())
     val lastUpdate = MutableStateFlow<Date?>(null)
 
-    fun setNotificationEnabled(bagId: Int, enabled: Boolean) {
+    fun updateItemNotificationEnabled(bagId: Int, enabled: Boolean) {
         items.update { list ->
             val mutableList = list.toMutableList()
             var bagIndex = -1
@@ -25,7 +25,7 @@ class BagsRepository {
         }
     }
 
-    fun setAllNotificationsEnabled(enabled: Boolean) {
+    fun updateAllItemNotificationsEnabled(enabled: Boolean) {
         items.update { list ->
             return@update list.map { bag ->
                 bag.copy(notificationEnabled = enabled)

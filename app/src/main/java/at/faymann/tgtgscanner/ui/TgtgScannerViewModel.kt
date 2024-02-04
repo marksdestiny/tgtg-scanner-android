@@ -58,11 +58,11 @@ class TgtgScannerViewModel(
     }
 
     fun setNotificationEnabled(bagId: Int, enabled: Boolean) {
-        bagsRepository.setNotificationEnabled(bagId, enabled)
+        bagsRepository.updateItemNotificationEnabled(bagId, enabled)
     }
 
     fun setAllNotificationsEnabled(enabled: Boolean) {
-        bagsRepository.setAllNotificationsEnabled(enabled)
+        bagsRepository.updateAllItemNotificationsEnabled(enabled)
     }
 
     companion object {
