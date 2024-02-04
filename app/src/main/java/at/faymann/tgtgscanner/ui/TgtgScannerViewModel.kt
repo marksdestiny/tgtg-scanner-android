@@ -10,7 +10,6 @@ import at.faymann.tgtgscanner.TgtgScannerApplication
 import at.faymann.tgtgscanner.data.BagsRepository
 import at.faymann.tgtgscanner.data.UserPreferencesRepository
 import at.faymann.tgtgscanner.data.WorkManagerTgtgScannerRepository
-import at.faymann.tgtgscanner.network.TgtgClient
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -18,15 +17,11 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-private const val TAG = "TgtgScannerViewModel"
-
 class TgtgScannerViewModel(
     private val userPreferencesRepository: UserPreferencesRepository,
     private val workManagerTgtgScannerRepository: WorkManagerTgtgScannerRepository,
     private val bagsRepository: BagsRepository
 ): ViewModel() {
-
-    private val client: TgtgClient = TgtgClient(userPreferencesRepository)
 
     private val isAutoCheckEnabled = workManagerTgtgScannerRepository.workInfo.map { info ->
         info.state == WorkInfo.State.ENQUEUED || info.state == WorkInfo.State.RUNNING || info.state == WorkInfo.State.BLOCKED

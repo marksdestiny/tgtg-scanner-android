@@ -31,6 +31,7 @@ class TgtgClient (
 
     private val userId = 95337812
     private val client: OkHttpClient = OkHttpClient()
+    private val jsonDeserializer = Json { this.ignoreUnknownKeys = true }
 
     suspend fun refreshToken() {
         val accessToken = userPreferencesRepository.userPreferences.map { it.accessToken }.first()
@@ -77,8 +78,6 @@ class TgtgClient (
         userPreferencesRepository.updateDataDome(responseCookie.value)
     }
 
-    private val json1 = Json { this.ignoreUnknownKeys = true }
-
     suspend fun getItems() : List<TgtgItem> {
         val accessToken = userPreferencesRepository.userPreferences.map { it.accessToken }.first()
         val dataDome = userPreferencesRepository.userPreferences.map { it.dataDome }.first()
@@ -106,7 +105,7 @@ class TgtgClient (
         val responseString = response.body!!.string()
         Log.d(TAG, responseString)
 
-        val responseBody = Json { this.ignoreUnknownKeys = true }.decodeFromString<ItemsResponseBody>(responseString)
+        val responseBody = jsonDeserializer.decodeFromString<ItemsResponseBody>(responseString)
         val items = responseBody.items.map { item ->
             TgtgItem(item.item.itemId.toInt(), item.displayName, item.itemsAvailable)
         }
