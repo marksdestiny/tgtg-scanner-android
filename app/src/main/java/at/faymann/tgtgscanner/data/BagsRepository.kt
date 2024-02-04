@@ -10,12 +10,19 @@ class BagsRepository {
     val items = MutableStateFlow<List<Bag>>(listOf())
 
     private val _lastUpdated = MutableStateFlow<Date?>(null)
+
+    /**
+     * The date and time the bags have last been synchronized with the TGTG server.
+     */
     val lastUpdated = _lastUpdated.asStateFlow()
 
     fun updateLastUpdated(date: Date) {
         _lastUpdated.value = date
     }
 
+    /**
+     * Enable or disable notifications for a specific bag.
+     */
     fun updateItemNotificationEnabled(bagId: Int, enabled: Boolean) {
         items.update { list ->
             val mutableList = list.toMutableList()
@@ -32,6 +39,9 @@ class BagsRepository {
         }
     }
 
+    /**
+     * Enable or disable notifications all bags.
+     */
     fun updateAllItemNotificationsEnabled(enabled: Boolean) {
         items.update { list ->
             return@update list.map { bag ->
