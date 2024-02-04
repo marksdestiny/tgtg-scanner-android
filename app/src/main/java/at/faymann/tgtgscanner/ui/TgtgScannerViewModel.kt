@@ -1,6 +1,5 @@
 package at.faymann.tgtgscanner.ui
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -18,7 +17,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.util.Date
 
 private const val TAG = "TgtgScannerViewModel"
 
@@ -35,32 +33,27 @@ class TgtgScannerViewModel(
     }
     private val lastUpdated = bagsRepository.lastUpdate
     private val bags = bagsRepository.items
+    private val userPreferences = userPreferencesRepository.userPreferences
 
-    val uiState: StateFlow<TgtgScannerUiState> = combine(isAutoCheckEnabled, lastUpdated, bags) { check, update, bags ->
-            TgtgScannerUiState(check, bags, update, false)
+    val uiState: StateFlow<TgtgScannerUiState> = combine(isAutoCheckEnabled, lastUpdated, bags, userPreferences) { check, update, bags, preferences ->
+            TgtgScannerUiState(check, preferences.autoCheckIntervalMinutes, bags, update)
         }.stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5000L),
             TgtgScannerUiState()
         )
 
+    fun setAutoCheckInterval(minutes: Int) {
+        viewModelScope.launch {
+            userPreferencesRepository.updateAutoCheckInterval(minutes)
+        }
+    }
+
     fun setAutoCheckBagsEnabled(enabled: Boolean) {
         if (enabled) {
             workManagerTgtgScannerRepository.check()
         } else {
             workManagerTgtgScannerRepository.cancel()
-        }
-    }
-
-    fun refreshItems() {
-        viewModelScope.launch {
-            try {
-                val items = client.getItems()
-                bags.value = items
-                lastUpdated.value = Date()
-            } catch (e: Exception) {
-                Log.e(TAG, e.message.toString())
-            }
         }
     }
 

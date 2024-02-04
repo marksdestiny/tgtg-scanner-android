@@ -8,6 +8,7 @@ import at.faymann.tgtgscanner.TgtgScannerApplication
 import at.faymann.tgtgscanner.data.Bag
 import at.faymann.tgtgscanner.network.TgtgClient
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import java.util.Date
 
 class CheckBagsWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, params) {
@@ -23,7 +24,9 @@ class CheckBagsWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         client.refreshToken()
         while(!isStopped) {
             checkBags()
-            delay(60000)
+
+            val delayMinutes = application.userPreferencesRepository.userPreferences.first().autoCheckIntervalMinutes
+            delay(delayMinutes * 60000L)
         }
         return Result.success()
     }

@@ -15,7 +15,8 @@ data class UserPreferences (
     val userId: Int,
     val dataDome: String,
     val accessToken: String,
-    val refreshToken: String
+    val refreshToken: String,
+    val autoCheckIntervalMinutes: Int
 )
 
 class UserPreferencesRepository(
@@ -27,6 +28,7 @@ class UserPreferencesRepository(
         val DATA_DOME = stringPreferencesKey("data_dome")
         val ACCESS_TOKEN = stringPreferencesKey("access_token")
         val REFRESH_TOKEN = stringPreferencesKey("refresh_token")
+        val AUTO_CHECK_INTERVAL = intPreferencesKey("auto_check_interval")
     }
 
     val userPreferences: Flow<UserPreferences> = dataStore.data
@@ -42,12 +44,21 @@ class UserPreferencesRepository(
             val dataDome = preferences[Keys.DATA_DOME] ?: ""
             val accessToken = preferences[Keys.ACCESS_TOKEN] ?: "e30.eyJzdWIiOiI5NTMzNzgxMiIsImV4cCI6MTcwNzE0MjQ4MCwidCI6IlpGaWdjcFFVUjN5ejNLSDNobWRscWc6MDoxIn0.NCJUB0tn3daLrDc-N49G39mGNoY-soAtxF1LBP8ihs0"
             val refreshToken = preferences[Keys.REFRESH_TOKEN] ?: "e30.eyJzdWIiOiI5NTMzNzgxMiIsImV4cCI6MTczODU5MjA4MCwidCI6IlVZeWNqTnpCUmVtOFhLVW5ySVdkaGc6MDowIn0.UvRhY5QmxymhWoM5prRVpmw0c7kvethKWHTaFSR_6YI"
-            UserPreferences(userId, dataDome, accessToken, refreshToken)
+            val autoCheckIntervalMinutes = preferences[Keys.AUTO_CHECK_INTERVAL] ?: 1
+            UserPreferences(userId, dataDome, accessToken, refreshToken, autoCheckIntervalMinutes)
         }
 
     suspend fun updateUserId(userId: Int) {
         dataStore.edit { preferences ->
             preferences[Keys.USER_ID] = userId
+        }
+    }
+    suspend fun updateAutoCheckInterval(minutes: Int) {
+        if (minutes < 1) {
+            throw IllegalArgumentException("The auto check interval must be at least one minute.")
+        }
+        dataStore.edit { preferences ->
+            preferences[Keys.AUTO_CHECK_INTERVAL] = minutes
         }
     }
     suspend fun updateAccessToken(accessToken: String) {
