@@ -1,9 +1,10 @@
 package at.faymann.tgtgscanner.data
 
-import androidx.compose.runtime.mutableStateListOf
+import kotlinx.coroutines.flow.MutableStateFlow
+import java.util.Date
 
 class BagsRepository {
 
-    val items = mutableStateListOf<Bag>()
-
+    val items = MutableStateFlow<List<Bag>>(listOf())
+    val lastUpdate = MutableStateFlow<Date?>(null)
 }

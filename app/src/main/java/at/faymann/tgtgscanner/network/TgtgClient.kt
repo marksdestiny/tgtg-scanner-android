@@ -78,6 +78,8 @@ class TgtgClient (
         userPreferencesRepository.updateDataDome(responseCookie.value)
     }
 
+    private val json1 = Json { this.ignoreUnknownKeys = true }
+
     suspend fun getItems() : List<Bag> {
         val accessToken = userPreferencesRepository.userPreferences.map { it.accessToken }.first()
         val dataDome = userPreferencesRepository.userPreferences.map { it.dataDome }.first()

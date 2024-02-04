@@ -6,15 +6,17 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.work.WorkInfo
 import at.faymann.tgtgscanner.TgtgScannerApplication
 import at.faymann.tgtgscanner.data.BagsRepository
 import at.faymann.tgtgscanner.data.UserPreferencesRepository
 import at.faymann.tgtgscanner.data.WorkManagerTgtgScannerRepository
 import at.faymann.tgtgscanner.network.TgtgClient
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.util.Date
 
@@ -28,31 +30,21 @@ class TgtgScannerViewModel(
 
     private val client: TgtgClient = TgtgClient(userPreferencesRepository)
 
-    private val _uiState = MutableStateFlow(TgtgScannerUiState())
-    val uiState: StateFlow<TgtgScannerUiState>
-        get() = _uiState.asStateFlow()
-
-    init {
-        viewModelScope.launch {
-            try {
-                client.refreshToken()
-                val items = client.getItems()
-                _uiState.update { state ->
-                    state.copy(
-                        items = items,
-                        lastUpdated = Date()
-                    )
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, e.message.toString())
-            }
-        }
+    private val isAutoCheckEnabled = workManagerTgtgScannerRepository.workInfo.map { info ->
+        info.state == WorkInfo.State.ENQUEUED || info.state == WorkInfo.State.RUNNING || info.state == WorkInfo.State.BLOCKED
     }
+    private val lastUpdated = bagsRepository.lastUpdate
+    private val bags = bagsRepository.items
+
+    val uiState: StateFlow<TgtgScannerUiState> = combine(isAutoCheckEnabled, lastUpdated, bags) { check, update, bags ->
+            TgtgScannerUiState(check, bags, update, false)
+        }.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000L),
+            TgtgScannerUiState()
+        )
 
     fun setAutoCheckBagsEnabled(enabled: Boolean) {
-        _uiState.update { state ->
-            state.copy(isAutoCheckEnabled = enabled)
-        }
         if (enabled) {
             workManagerTgtgScannerRepository.check()
         } else {
@@ -64,12 +56,8 @@ class TgtgScannerViewModel(
         viewModelScope.launch {
             try {
                 val items = client.getItems()
-                _uiState.update { state ->
-                    state.copy(
-                        items = items,
-                        lastUpdated = Date()
-                    )
-                }
+                bags.value = items
+                lastUpdated.value = Date()
             } catch (e: Exception) {
                 Log.e(TAG, e.message.toString())
             }
