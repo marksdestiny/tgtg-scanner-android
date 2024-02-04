@@ -36,7 +36,7 @@ class WorkManagerTgtgScannerRepository(
             .build()
         workManager.enqueueUniqueWork(
             CHECK_BAGS_WORK_NAME,
-            ExistingWorkPolicy.KEEP,
+            ExistingWorkPolicy.REPLACE,
             worker
         )
     }

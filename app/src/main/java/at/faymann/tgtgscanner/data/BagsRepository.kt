@@ -3,20 +3,20 @@ package at.faymann.tgtgscanner.data
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import java.util.Date
+import java.time.LocalDateTime
 
 class BagsRepository {
 
     val items = MutableStateFlow<List<Bag>>(listOf())
 
-    private val _lastUpdated = MutableStateFlow<Date?>(null)
+    private val _lastUpdated = MutableStateFlow<LocalDateTime?>(null)
 
     /**
      * The date and time the bags have last been synchronized with the TGTG server.
      */
     val lastUpdated = _lastUpdated.asStateFlow()
 
-    fun updateLastUpdated(date: Date) {
+    fun updateLastUpdated(date: LocalDateTime) {
         _lastUpdated.value = date
     }
 

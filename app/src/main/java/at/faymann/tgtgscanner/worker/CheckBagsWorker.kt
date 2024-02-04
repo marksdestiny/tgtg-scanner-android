@@ -11,7 +11,8 @@ import at.faymann.tgtgscanner.network.TgtgItem
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
-import java.util.Date
+import java.time.Duration
+import java.time.LocalDateTime
 
 class CheckBagsWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, params) {
 
@@ -22,20 +23,30 @@ class CheckBagsWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         Log.d("CheckBagsWorker", "Checking bags...")
         application = (applicationContext as TgtgScannerApplication)
         client = TgtgClient(application.userPreferencesRepository)
-        client.refreshToken()
+
+        if (application.bagsRepository.lastUpdated.value == null) {
+            client.refreshToken()
+            update()
+        }
+
         while(!isStopped) {
-            Log.d("CheckBagsWorker", "Checking bags...")
-            val items = client.getItems()
+            val secondsBetweenUpdates = application.userPreferencesRepository.userPreferences.first().autoCheckIntervalMinutes * 60
+            val secondsSinceLastUpdate = Duration.between(application.bagsRepository.lastUpdated.value, LocalDateTime.now()).seconds
+            delay((secondsBetweenUpdates - secondsSinceLastUpdate) * 1000L)
 
-            application.bagsRepository.items.update {bags ->
-                checkBags(items, bags)
-            }
-            application.bagsRepository.updateLastUpdated(Date())
-
-            val delayMinutes = application.userPreferencesRepository.userPreferences.first().autoCheckIntervalMinutes
-            delay(delayMinutes * 60000L)
+            update()
         }
         return Result.success()
+    }
+
+    private suspend fun update() {
+        Log.d("CheckBagsWorker", "Checking bags...")
+        val items = client.getItems()
+
+        application.bagsRepository.items.update { bags ->
+            checkBags(items, bags)
+        }
+        application.bagsRepository.updateLastUpdated(LocalDateTime.now())
     }
 
     private fun checkBags(items: List<TgtgItem>, bags: List<Bag>) : List<Bag> {

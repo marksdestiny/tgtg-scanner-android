@@ -13,6 +13,7 @@ import at.faymann.tgtgscanner.data.WorkManagerTgtgScannerRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -41,6 +42,11 @@ class TgtgScannerViewModel(
     fun setAutoCheckInterval(minutes: Int) {
         viewModelScope.launch {
             userPreferencesRepository.updateAutoCheckInterval(minutes)
+            if (isAutoCheckEnabled.first()) {
+                // Restart the worker
+                workManagerTgtgScannerRepository.cancel()
+                workManagerTgtgScannerRepository.check()
+            }
         }
     }
 
