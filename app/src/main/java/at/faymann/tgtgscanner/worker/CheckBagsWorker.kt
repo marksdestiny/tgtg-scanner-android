@@ -21,6 +21,9 @@ class CheckBagsWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
 
     override suspend fun doWork(): Result {
         Log.d("CheckBagsWorker", "Checking bags...")
+
+        setForeground(makeCheckForegroundInfo(applicationContext))
+
         application = (applicationContext as TgtgScannerApplication)
         client = TgtgClient(application.userPreferencesRepository)
 
@@ -65,7 +68,7 @@ class CheckBagsWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
             val bag = bags[bagIndex]
             if (bag.itemsAvailable == 0 && item.itemsAvailable > 0 && bag.notificationEnabled) {
                 Log.d("CheckBagsWorker", "Sending notification...")
-                makeStockNotification(bag.name, applicationContext)
+                showStockNotification(bag, applicationContext)
                 Log.d("CheckBagsWorker", "Done.")
             }
             if (bag.itemsAvailable != item.itemsAvailable) {

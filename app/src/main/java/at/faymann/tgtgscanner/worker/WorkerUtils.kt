@@ -24,22 +24,53 @@ import android.content.pm.PackageManager
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.work.ForegroundInfo
 import at.faymann.tgtgscanner.R
+import at.faymann.tgtgscanner.data.Bag
 
 const val STOCK_NOTIFICATION_CHANNEL_NAME = "Stock Change Notifications"
-const val STOCK_NOTIFICATION_CHANNEL_DESCRIPTION = "Shows notifications whenever a stock rises from zero"
+const val STOCK_NOTIFICATION_CHANNEL_DESCRIPTION = "Shows notifications whenever a stock rises from zero."
 const val STOCK_NOTIFICATION_CHANNEL_ID = "STOCK_NOTIFICATION"
 const val STOCK_NOTIFICATION_TITLE = "New bag available"
-const val STOCK_NOTIFICATION_ID = 1
+
+const val CHECK_NOTIFICATION_CHANNEL_NAME = "Background Check Notifications"
+const val CHECK_NOTIFICATION_CHANNEL_DESCRIPTION = "Shows notifications when checking the stock."
+const val CHECK_NOTIFICATION_CHANNEL_ID = "CHECK_NOTIFICATION"
+const val CHECK_NOTIFICATION_MESSAGE = "Your bags are being checked in the background."
+const val CHECK_NOTIFICATION_ID = 1
+
+fun makeCheckForegroundInfo(context: Context) : ForegroundInfo {
+    // Make a channel if necessary
+    // Create the NotificationChannel, but only on API 26+ because
+    // the NotificationChannel class is new and not in the support library
+    val name = CHECK_NOTIFICATION_CHANNEL_NAME
+    val description = CHECK_NOTIFICATION_CHANNEL_DESCRIPTION
+    val importance = NotificationManager.IMPORTANCE_MIN
+    val channel = NotificationChannel(CHECK_NOTIFICATION_CHANNEL_ID, name, importance)
+    channel.description = description
+
+    // Add the channel
+    val notificationManager =
+        context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager?
+    notificationManager?.createNotificationChannel(channel)
+
+    // Create the foreground notification
+    val notification = NotificationCompat.Builder(context, CHECK_NOTIFICATION_CHANNEL_ID)
+        .setSmallIcon(R.drawable.ic_launcher_foreground)
+        .setContentText(CHECK_NOTIFICATION_MESSAGE)
+        .setPriority(NotificationCompat.PRIORITY_MIN)
+        .setSilent(true)
+        .build()
+
+    return ForegroundInfo(CHECK_NOTIFICATION_ID, notification)
+}
 
 /**
  * Create a Notification that is shown as a heads-up notification if possible.
  *
- * @param message Message shown on the notification
  * @param context Context needed to create Toast
  */
-fun makeStockNotification(message: String, context: Context) {
-
+fun showStockNotification(bag: Bag, context: Context) {
     // Make a channel if necessary
     // Create the NotificationChannel, but only on API 26+ because
     // the NotificationChannel class is new and not in the support library
@@ -52,14 +83,13 @@ fun makeStockNotification(message: String, context: Context) {
     // Add the channel
     val notificationManager =
         context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager?
-
     notificationManager?.createNotificationChannel(channel)
 
     // Create the notification
     val builder = NotificationCompat.Builder(context, STOCK_NOTIFICATION_CHANNEL_ID)
         .setSmallIcon(R.drawable.ic_launcher_foreground)
         .setContentTitle(STOCK_NOTIFICATION_TITLE)
-        .setContentText(message)
+        .setContentText(bag.name)
         .setPriority(NotificationCompat.PRIORITY_HIGH)
         .setVibrate(LongArray(0))
 
@@ -71,5 +101,5 @@ fun makeStockNotification(message: String, context: Context) {
     ) {
         return
     }
-    NotificationManagerCompat.from(context).notify(STOCK_NOTIFICATION_ID, builder.build())
+    NotificationManagerCompat.from(context).notify(bag.id, builder.build())
 }
