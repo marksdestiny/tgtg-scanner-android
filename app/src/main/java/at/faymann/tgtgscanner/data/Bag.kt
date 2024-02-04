@@ -1,6 +1,6 @@
-package at.faymann.tgtgscanner.network
+package at.faymann.tgtgscanner.data
 
-data class TgtgItem (
+data class Bag (
     val id: Int,
     val name: String,
     val itemsAvailable: Int

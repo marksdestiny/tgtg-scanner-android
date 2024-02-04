@@ -7,10 +7,10 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import at.faymann.tgtgscanner.TgtgScannerApplication
+import at.faymann.tgtgscanner.data.BagsRepository
 import at.faymann.tgtgscanner.data.UserPreferencesRepository
 import at.faymann.tgtgscanner.data.WorkManagerTgtgScannerRepository
 import at.faymann.tgtgscanner.network.TgtgClient
-import at.faymann.tgtgscanner.network.TgtgItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,18 +18,12 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.Date
 
-const val TAG = "TgtgScannerViewModel"
-
-data class TgtgScannerUiState(
-    val isAutoCheckEnabled: Boolean = false,
-    val items: List<TgtgItem> = listOf(),
-    val lastUpdated: Date? = null,
-    val isRunning: Boolean = false
-)
+private const val TAG = "TgtgScannerViewModel"
 
 class TgtgScannerViewModel(
     private val userPreferencesRepository: UserPreferencesRepository,
-    private val workManagerTgtgScannerRepository: WorkManagerTgtgScannerRepository
+    private val workManagerTgtgScannerRepository: WorkManagerTgtgScannerRepository,
+    private val bagsRepository: BagsRepository
 ): ViewModel() {
 
     private val client: TgtgClient = TgtgClient(userPreferencesRepository)
@@ -56,7 +50,6 @@ class TgtgScannerViewModel(
     }
 
     fun setAutoCheckBagsEnabled(enabled: Boolean) {
-        Log.d("TgtgScannerViewModel", enabled.toString())
         _uiState.update { state ->
             state.copy(isAutoCheckEnabled = enabled)
         }
@@ -87,7 +80,10 @@ class TgtgScannerViewModel(
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val application = (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as TgtgScannerApplication)
-                TgtgScannerViewModel(application.userPreferencesRepository, application.workManagerTgtgScannerRepository)
+                TgtgScannerViewModel(
+                    application.userPreferencesRepository,
+                    application.workManagerTgtgScannerRepository,
+                    application.bagsRepository)
             }
         }
     }

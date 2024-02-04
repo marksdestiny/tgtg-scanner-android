@@ -1,6 +1,7 @@
 package at.faymann.tgtgscanner.network
 
 import android.util.Log
+import at.faymann.tgtgscanner.data.Bag
 import at.faymann.tgtgscanner.data.UserPreferencesRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -30,11 +31,7 @@ class TgtgClient (
 ) {
 
     private val userId = 95337812
-    private val client: OkHttpClient
-
-    init {
-        client = OkHttpClient()
-    }
+    private val client: OkHttpClient = OkHttpClient()
 
     suspend fun refreshToken() {
         val accessToken = userPreferencesRepository.userPreferences.map { it.accessToken }.first()
@@ -81,7 +78,7 @@ class TgtgClient (
         userPreferencesRepository.updateDataDome(responseCookie.value)
     }
 
-    suspend fun getItems() : List<TgtgItem> {
+    suspend fun getItems() : List<Bag> {
         val accessToken = userPreferencesRepository.userPreferences.map { it.accessToken }.first()
         val dataDome = userPreferencesRepository.userPreferences.map { it.dataDome }.first()
 
@@ -110,7 +107,7 @@ class TgtgClient (
 
         val responseBody = Json { this.ignoreUnknownKeys = true }.decodeFromString<ItemsResponseBody>(responseString)
         val items = responseBody.items.map { item ->
-            TgtgItem(item.item.itemId.toInt(), item.displayName, item.itemsAvailable)
+            Bag(item.item.itemId.toInt(), item.displayName, item.itemsAvailable)
         }
         return items
     }

@@ -18,7 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import at.faymann.tgtgscanner.network.TgtgItem
+import at.faymann.tgtgscanner.data.Bag
 
 @Composable
 fun TgtgScannerApp(
@@ -65,7 +65,7 @@ fun TgtgScannerScreen(
                         .fillMaxWidth()
                 ){
                     Text(
-                        text = item.displayName,
+                        text = item.name,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(8.dp, 4.dp, 6.dp, 0.dp)
                     )
@@ -83,8 +83,8 @@ fun TgtgScannerScreen(
 @Composable
 fun TgtgScannerPreview() {
     val items = listOf(
-        TgtgItem("Spar", 3),
-        TgtgItem("Billa", 0)
+        Bag(1,"Spar", 3),
+        Bag(2,"Billa", 0)
     )
     TgtgScannerScreen(
         TgtgScannerUiState(false, items, null, false),

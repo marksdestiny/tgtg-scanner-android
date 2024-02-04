@@ -3,6 +3,7 @@ package at.faymann.tgtgscanner
 import android.app.Application
 import android.content.Context
 import androidx.datastore.preferences.preferencesDataStore
+import at.faymann.tgtgscanner.data.BagsRepository
 import at.faymann.tgtgscanner.data.UserPreferencesRepository
 import at.faymann.tgtgscanner.data.WorkManagerTgtgScannerRepository
 
@@ -14,9 +15,11 @@ private val Context.dataStore by preferencesDataStore(
 class TgtgScannerApplication : Application() {
     lateinit var userPreferencesRepository: UserPreferencesRepository
     lateinit var workManagerTgtgScannerRepository: WorkManagerTgtgScannerRepository
+    lateinit var bagsRepository: BagsRepository
     override fun onCreate() {
         super.onCreate()
         workManagerTgtgScannerRepository = WorkManagerTgtgScannerRepository(this)
         userPreferencesRepository = UserPreferencesRepository(dataStore)
+        bagsRepository = BagsRepository()
     }
 }
