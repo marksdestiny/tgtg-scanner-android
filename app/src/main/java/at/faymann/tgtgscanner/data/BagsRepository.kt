@@ -1,13 +1,20 @@
 package at.faymann.tgtgscanner.data
 
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import java.util.Date
 
 class BagsRepository {
 
     val items = MutableStateFlow<List<Bag>>(listOf())
-    val lastUpdate = MutableStateFlow<Date?>(null)
+
+    private val _lastUpdated = MutableStateFlow<Date?>(null)
+    val lastUpdated = _lastUpdated.asStateFlow()
+
+    fun updateLastUpdated(date: Date) {
+        _lastUpdated.value = date
+    }
 
     fun updateItemNotificationEnabled(bagId: Int, enabled: Boolean) {
         items.update { list ->

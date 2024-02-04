@@ -31,7 +31,7 @@ class TgtgScannerViewModel(
     private val isAutoCheckEnabled = workManagerTgtgScannerRepository.workInfo.map { info ->
         info.state == WorkInfo.State.ENQUEUED || info.state == WorkInfo.State.RUNNING || info.state == WorkInfo.State.BLOCKED
     }
-    private val lastUpdated = bagsRepository.lastUpdate
+    private val lastUpdated = bagsRepository.lastUpdated
     private val bags = bagsRepository.items
     private val userPreferences = userPreferencesRepository.userPreferences
 
