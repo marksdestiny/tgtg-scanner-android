@@ -9,8 +9,6 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.Cookie
-import okhttp3.CookieJar
-import okhttp3.HttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -18,14 +16,14 @@ import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 
-const val BASE_URL: String = "https://apptoogoodtogo.com/api/"
+private const val BASE_URL: String = "https://apptoogoodtogo.com/api/"
 //const val BASE_URL: String = "https://httpbin.org/anything/"
-const val ITEM_ENDPOINT: String = "item/v8/"
-const val REFRESH_ENDPOINT: String = "auth/v3/token/refresh"
+private const val ITEM_ENDPOINT: String = "item/v8/"
+private const val REFRESH_ENDPOINT: String = "auth/v3/token/refresh"
 
-const val USER_AGENT: String = "TGTG/24.1.12 Dalvik/2.1.0 (Linux; U; Android 9; Nexus 5 Build/M4B30Z)"
+private const val USER_AGENT: String = "TGTG/24.1.12 Dalvik/2.1.0 (Linux; U; Android 9; Nexus 5 Build/M4B30Z)"
 
-const val TAG = "TgtgClient"
+private const val TAG = "TgtgClient"
 
 class TgtgClient (
     private val userPreferencesRepository: UserPreferencesRepository
@@ -35,18 +33,7 @@ class TgtgClient (
     private val client: OkHttpClient
 
     init {
-
-        val cookieJar: CookieJar = object : CookieJar {
-            private var cookies: List<Cookie> = listOf()
-            override fun loadForRequest(url: HttpUrl): List<Cookie> {
-                return cookies
-            }
-
-            override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
-                this.cookies = cookies
-            }
-        }
-        client = OkHttpClient()//.newBuilder().cookieJar(cookieJar).build()
+        client = OkHttpClient()
     }
 
     suspend fun refreshToken() {
@@ -54,7 +41,6 @@ class TgtgClient (
         val refreshToken = userPreferencesRepository.userPreferences.map { it.refreshToken }.first()
         val dataDome = userPreferencesRepository.userPreferences.map { it.dataDome }.first()
 
-        val url = BASE_URL + REFRESH_ENDPOINT
         val data = RefreshReqeustBody(refreshToken)
         val json = Json.encodeToString(data)
         val body: RequestBody = json.toRequestBody("application/json".toMediaType())
@@ -114,16 +100,18 @@ class TgtgClient (
         val response = withContext(Dispatchers.IO) {
             client.newCall(request).execute()
         }
+        parseDataDome(response)
+
         if (response.body == null) {
             throw Exception("Response body is empty.")
         }
         val responseString = response.body!!.string()
         Log.d(TAG, responseString)
 
-        val items = Json { this.ignoreUnknownKeys = true }.decodeFromString<ItemsResponseBody>(responseString)
-
-        parseDataDome(response)
-
-        return items.items
+        val responseBody = Json { this.ignoreUnknownKeys = true }.decodeFromString<ItemsResponseBody>(responseString)
+        val items = responseBody.items.map { item ->
+            TgtgItem(item.item.itemId.toInt(), item.displayName, item.itemsAvailable)
+        }
+        return items
     }
 }

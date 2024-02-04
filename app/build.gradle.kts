@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "at.faymann.tgtgscanner"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -64,6 +64,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
     implementation("androidx.datastore:datastore-preferences:1.0.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")

@@ -8,13 +8,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import at.faymann.tgtgscanner.network.TgtgItem
@@ -25,21 +26,31 @@ fun TgtgScannerApp(
         factory = TgtgScannerViewModel.Factory
     )
 ) {
+    val uiState by viewModel.uiState.collectAsState()
     TgtgScannerScreen(
-        viewModel.tgtgScannerUiState,
-        onRefresh = { viewModel.refreshItems() }
+        uiState,
+        onRefresh = viewModel::refreshItems,
+        onAutoCheckEnabledChanged = viewModel::setAutoCheckBagsEnabled
     )
 }
 
 @Composable
 fun TgtgScannerScreen(
     uiState: TgtgScannerUiState,
+    onAutoCheckEnabledChanged: (Boolean) -> Unit,
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column (
         modifier = Modifier.padding(4.dp)
     ){
+        Row {
+            Checkbox(
+                checked = uiState.isAutoCheckEnabled,
+                onCheckedChange = { value -> onAutoCheckEnabledChanged(value) },
+            )
+            Text(text = "Auto check bags", Modifier.padding(0.dp, 12.dp))
+        }
         Button(onClick = { onRefresh() }) {
             Text(text = "Refresh")
         }
@@ -50,7 +61,8 @@ fun TgtgScannerScreen(
         LazyColumn ( modifier = modifier ) {
             items(uiState.items) { item ->
                 Card (
-                    modifier = Modifier.padding(0.dp, 3.dp).fillMaxWidth()
+                    modifier = Modifier                        .padding(0.dp, 3.dp)
+                        .fillMaxWidth()
                 ){
                     Text(
                         text = item.displayName,
@@ -74,5 +86,9 @@ fun TgtgScannerPreview() {
         TgtgItem("Spar", 3),
         TgtgItem("Billa", 0)
     )
-    TgtgScannerScreen(TgtgScannerUiState(items, null, false), onRefresh = {})
+    TgtgScannerScreen(
+        TgtgScannerUiState(false, items, null, false),
+        onRefresh = {},
+        onAutoCheckEnabledChanged = {}
+    )
 }
