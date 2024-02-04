@@ -57,6 +57,10 @@ class TgtgScannerViewModel(
         }
     }
 
+    fun setNotificationEnabled(bagId: Int, enabled: Boolean) {
+        bagsRepository.setNotificationEnabled(bagId, enabled)
+    }
+
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {

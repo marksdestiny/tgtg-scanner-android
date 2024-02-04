@@ -42,12 +42,12 @@ class CheckBagsWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
                     bagIndex = index
             }
             if (bagIndex == -1) {
-                bags.add(Bag(item.id, item.name, item.itemsAvailable))
+                bags.add(Bag(item.id, item.name, item.itemsAvailable, true))
                 continue
             }
 
             val bag = bags[bagIndex]
-            if (bag.itemsAvailable == 0 && item.itemsAvailable > 0) {
+            if (bag.itemsAvailable == 0 && item.itemsAvailable > 0 && bag.notificationEnabled) {
                 Log.d("CheckBagsWorker", "Sending notification...")
                 makeStockNotification(bag.name, applicationContext)
                 Log.d("CheckBagsWorker", "Done.")

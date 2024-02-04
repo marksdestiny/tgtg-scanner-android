@@ -17,8 +17,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -34,7 +37,8 @@ fun TgtgScannerApp(
     TgtgScannerScreen(
         uiState,
         onAutoCheckEnabledChanged = viewModel::setAutoCheckBagsEnabled,
-        onAutoCheckIntervalChanged = viewModel::setAutoCheckInterval
+        onAutoCheckIntervalChanged = viewModel::setAutoCheckInterval,
+        onNotificationEnabledChanged = viewModel::setNotificationEnabled
     )
 }
 
@@ -43,55 +47,82 @@ fun TgtgScannerScreen(
     uiState: TgtgScannerUiState,
     onAutoCheckEnabledChanged: (Boolean) -> Unit,
     onAutoCheckIntervalChanged: (Int) -> Unit,
+    onNotificationEnabledChanged: (Int, Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column (
         modifier = Modifier.padding(4.dp)
     ){
-        Row (verticalAlignment = Alignment.CenterVertically) {
-            Checkbox(
-                checked = uiState.isAutoCheckEnabled,
-                onCheckedChange = { value -> onAutoCheckEnabledChanged(value) },
-            )
-            Text(text = "Auto check bags every ")
-            TextField(
-                value = uiState.autoCheckIntervalMinutes.toString(),
-                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
-                onValueChange = {value ->
-                    val minutes = value.trim().toIntOrNull()
-                    if (minutes == null || minutes < 1) {
-                        onAutoCheckIntervalChanged(1)
-                    } else {
-                        onAutoCheckIntervalChanged(minutes)
-                    }
-                },
-                modifier = Modifier.width(70.dp)
-            )
-            Text(text = " minutes")
-        }
-        Row {
-            Text(text = "Last update: ")
-            Text(text = uiState.lastUpdated?.toString() ?: "Never")
-        }
         LazyColumn ( modifier = modifier ) {
+            item {
+                TgtgScannerHeader(uiState, onAutoCheckEnabledChanged, onAutoCheckIntervalChanged)
+            }
             items(uiState.items) { item ->
-                Card (
-                    modifier = Modifier
-                        .padding(0.dp, 3.dp)
-                        .fillMaxWidth()
-                ){
-                    Text(
-                        text = item.name,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(8.dp, 4.dp, 6.dp, 0.dp)
-                    )
-                    Text(
-                        text = item.itemsAvailable.toString(),
-                        modifier = Modifier.padding(8.dp, 0.dp, 6.dp, 4.dp)
-                    )
-                }
+                TgtgScannerItem(item, onNotificationEnabledChanged)
             }
         }
+    }
+}
+
+@Composable
+private fun TgtgScannerItem(
+    item: Bag,
+    onNotificationEnabledChanged: (Int, Boolean) -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .padding(0.dp, 3.dp)
+            .fillMaxWidth()
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Checkbox(
+                checked = item.notificationEnabled,
+                onCheckedChange = { onNotificationEnabledChanged(item.id, it) }
+            )
+            Text(buildAnnotatedString {
+                withStyle(
+                    style = SpanStyle(
+                        fontWeight = FontWeight.Bold
+                    )
+                ) {
+                    append(item.name)
+                }
+                append(" (${item.itemsAvailable})")
+            })
+        }
+    }
+}
+
+@Composable
+private fun TgtgScannerHeader(
+    uiState: TgtgScannerUiState,
+    onAutoCheckEnabledChanged: (Boolean) -> Unit,
+    onAutoCheckIntervalChanged: (Int) -> Unit
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Checkbox(
+            checked = uiState.isAutoCheckEnabled,
+            onCheckedChange = { value -> onAutoCheckEnabledChanged(value) },
+        )
+        Text(text = "Auto check bags every ")
+        TextField(
+            value = uiState.autoCheckIntervalMinutes.toString(),
+            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
+            onValueChange = { value ->
+                val minutes = value.trim().toIntOrNull()
+                if (minutes == null || minutes < 1) {
+                    onAutoCheckIntervalChanged(1)
+                } else {
+                    onAutoCheckIntervalChanged(minutes)
+                }
+            },
+            modifier = Modifier.width(70.dp)
+        )
+        Text(text = " minutes")
+    }
+    Row {
+        Text(text = "Last update: ")
+        Text(text = uiState.lastUpdated?.toString() ?: "Never")
     }
 }
 
@@ -99,12 +130,15 @@ fun TgtgScannerScreen(
 @Composable
 fun TgtgScannerPreview() {
     val items = listOf(
-        Bag(1,"Spar", 3),
-        Bag(2,"Billa", 0)
+        Bag(1,"SPAR - Conrad v. Hötzendorf-Str. (Ostbahnhof) (Backwarensackerl)", 3, true),
+        Bag(2,"Billa", 0, true)
     )
     TgtgScannerScreen(
-        TgtgScannerUiState(),
+        TgtgScannerUiState(
+            items = items
+        ),
         onAutoCheckIntervalChanged = {},
-        onAutoCheckEnabledChanged = {}
+        onAutoCheckEnabledChanged = {},
+        onNotificationEnabledChanged = { _, _ ->  }
     )
 }
