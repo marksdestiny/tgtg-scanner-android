@@ -24,4 +24,12 @@ class BagsRepository {
             return@update mutableList
         }
     }
+
+    fun setAllNotificationsEnabled(enabled: Boolean) {
+        items.update { list ->
+            return@update list.map { bag ->
+                bag.copy(notificationEnabled = enabled)
+            }
+        }
+    }
 }

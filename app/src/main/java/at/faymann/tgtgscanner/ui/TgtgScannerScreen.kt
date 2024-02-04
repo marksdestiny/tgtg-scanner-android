@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Text
@@ -38,7 +39,8 @@ fun TgtgScannerApp(
         uiState,
         onAutoCheckEnabledChanged = viewModel::setAutoCheckBagsEnabled,
         onAutoCheckIntervalChanged = viewModel::setAutoCheckInterval,
-        onNotificationEnabledChanged = viewModel::setNotificationEnabled
+        onNotificationEnabledChanged = viewModel::setNotificationEnabled,
+        onAllNotificationsEnabledChanged = viewModel::setAllNotificationsEnabled
     )
 }
 
@@ -48,6 +50,7 @@ fun TgtgScannerScreen(
     onAutoCheckEnabledChanged: (Boolean) -> Unit,
     onAutoCheckIntervalChanged: (Int) -> Unit,
     onNotificationEnabledChanged: (Int, Boolean) -> Unit,
+    onAllNotificationsEnabledChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column (
@@ -55,7 +58,7 @@ fun TgtgScannerScreen(
     ){
         LazyColumn ( modifier = modifier ) {
             item {
-                TgtgScannerHeader(uiState, onAutoCheckEnabledChanged, onAutoCheckIntervalChanged)
+                TgtgScannerHeader(uiState, onAutoCheckEnabledChanged, onAutoCheckIntervalChanged, onAllNotificationsEnabledChanged)
             }
             items(uiState.items) { item ->
                 TgtgScannerItem(item, onNotificationEnabledChanged)
@@ -97,7 +100,8 @@ private fun TgtgScannerItem(
 private fun TgtgScannerHeader(
     uiState: TgtgScannerUiState,
     onAutoCheckEnabledChanged: (Boolean) -> Unit,
-    onAutoCheckIntervalChanged: (Int) -> Unit
+    onAutoCheckIntervalChanged: (Int) -> Unit,
+    onAllNotificationsEnabledChanged: (Boolean) -> Unit
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Checkbox(
@@ -124,6 +128,14 @@ private fun TgtgScannerHeader(
         Text(text = "Last update: ")
         Text(text = uiState.lastUpdated?.toString() ?: "Never")
     }
+    Row {
+        Button(onClick = { onAllNotificationsEnabledChanged(true) }) {
+            Text(text = "All")
+        }
+        Button(onClick = { onAllNotificationsEnabledChanged(false) }) {
+            Text(text = "None")
+        }
+    }
 }
 
 @Preview(showBackground = true)
@@ -139,6 +151,7 @@ fun TgtgScannerPreview() {
         ),
         onAutoCheckIntervalChanged = {},
         onAutoCheckEnabledChanged = {},
-        onNotificationEnabledChanged = { _, _ ->  }
+        onNotificationEnabledChanged = { _, _ ->  },
+        onAllNotificationsEnabledChanged = {}
     )
 }
