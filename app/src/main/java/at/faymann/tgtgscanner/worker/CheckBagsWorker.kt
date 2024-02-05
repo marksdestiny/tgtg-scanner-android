@@ -28,7 +28,6 @@ class CheckBagsWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         client = TgtgClient(application.userPreferencesRepository)
 
         if (application.bagsRepository.lastUpdated.value == null) {
-            client.refreshToken()
             update()
         }
 

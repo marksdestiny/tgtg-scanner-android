@@ -14,6 +14,8 @@ import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import java.time.Duration
+import java.time.LocalDateTime
 
 private const val BASE_URL: String = "https://apptoogoodtogo.com/api/"
 //const val BASE_URL: String = "https://httpbin.org/anything/"
@@ -32,7 +34,14 @@ class TgtgClient (
     private val client: OkHttpClient = OkHttpClient()
     private val jsonDeserializer = Json { this.ignoreUnknownKeys = true }
 
-    suspend fun refreshToken() {
+    private suspend fun refreshTokenIfNeeded() {
+        val accessTokenTtl = userPreferencesRepository.userPreferences.first().accessTokenTtl
+        if (accessTokenTtl == null || accessTokenTtl < LocalDateTime.now() - Duration.ofHours(1)) {
+            refreshToken()
+        }
+    }
+
+    private suspend fun refreshToken() {
         val userPreferences = userPreferencesRepository.userPreferences.first()
         val accessToken = userPreferences.accessToken
         val refreshToken = userPreferences.refreshToken
@@ -64,7 +73,9 @@ class TgtgClient (
 
             val refreshResponseBody = Json.decodeFromString<RefreshResponseBody>(responseString)
             userPreferencesRepository.updateRefreshToken(refreshResponseBody.refreshToken)
-            userPreferencesRepository.updateAccessToken(refreshResponseBody.accessToken)
+
+            val accessTokenTtl = LocalDateTime.now() + Duration.ofSeconds(refreshResponseBody.accessTokenTtlSeconds.toLong())
+            userPreferencesRepository.updateAccessToken(refreshResponseBody.accessToken, accessTokenTtl)
 
             parseDataDome(response)
         }
@@ -81,6 +92,8 @@ class TgtgClient (
     }
 
     suspend fun getItems() : List<TgtgItem> {
+        refreshTokenIfNeeded()
+
         val userPreferences = userPreferencesRepository.userPreferences.first()
         val accessToken = userPreferences.accessToken
         val dataDome = userPreferences.dataDome
