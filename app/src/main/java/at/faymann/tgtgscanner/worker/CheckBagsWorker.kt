@@ -61,7 +61,14 @@ class CheckBagsWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
                     bagIndex = index
             }
             if (bagIndex == -1) {
-                newBags.add(Bag(item.id, item.name, item.itemsAvailable, true))
+                newBags.add(Bag(
+                    id = item.id,
+                    name = item.name,
+                    itemsAvailable = item.itemsAvailable,
+                    notificationEnabled = true,
+                    logoPictureUrl = item.logoPictureUrl,
+                    coverPictureUrl = item.coverPictureUrl
+                ))
                 continue
             }
 

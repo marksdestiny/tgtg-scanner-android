@@ -111,7 +111,13 @@ class TgtgClient (
 
         val responseBody = jsonDeserializer.decodeFromString<ItemsResponseBody>(responseString)
         val items = responseBody.items.map { item ->
-            TgtgItem(item.item.itemId.toInt(), item.displayName, item.itemsAvailable)
+            TgtgItem(
+                id = item.item.itemId.toInt(),
+                name = item.displayName,
+                itemsAvailable = item.itemsAvailable,
+                coverPictureUrl = item.item.coverPicture.currentUrl,
+                logoPictureUrl = item.item.logoPicture.currentUrl
+            )
         }
         return items
     }
