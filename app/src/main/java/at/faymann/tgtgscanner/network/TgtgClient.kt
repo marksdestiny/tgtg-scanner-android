@@ -4,7 +4,6 @@ import android.util.Log
 import at.faymann.tgtgscanner.data.UserPreferencesRepository
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -34,9 +33,10 @@ class TgtgClient (
     private val jsonDeserializer = Json { this.ignoreUnknownKeys = true }
 
     suspend fun refreshToken() {
-        val accessToken = userPreferencesRepository.userPreferences.map { it.accessToken }.first()
-        val refreshToken = userPreferencesRepository.userPreferences.map { it.refreshToken }.first()
-        val dataDome = userPreferencesRepository.userPreferences.map { it.dataDome }.first()
+        val userPreferences = userPreferencesRepository.userPreferences.first()
+        val accessToken = userPreferences.accessToken
+        val refreshToken = userPreferences.refreshToken
+        val dataDome = userPreferences.dataDome
 
         val data = RefreshReqeustBody(refreshToken)
         val json = Json.encodeToString(data)
@@ -81,8 +81,9 @@ class TgtgClient (
     }
 
     suspend fun getItems() : List<TgtgItem> {
-        val accessToken = userPreferencesRepository.userPreferences.map { it.accessToken }.first()
-        val dataDome = userPreferencesRepository.userPreferences.map { it.dataDome }.first()
+        val userPreferences = userPreferencesRepository.userPreferences.first()
+        val accessToken = userPreferences.accessToken
+        val dataDome = userPreferences.dataDome
 
         val json = "{\"user_id\": \"$userId\", \"origin\": {\"latitude\": 0.0, \"longitude\": 0.0}, \"radius\": 21, \"page_size\": 100, \"page\": 1, \"discover\": false, \"favorites_only\": true, \"item_categories\": [], \"diet_categories\": [], \"pickup_earliest\": null, \"pickup_latest\": null, \"search_phrase\": null, \"with_stock_only\": false, \"hidden_only\": false, \"we_care_only\": false}"
         val body: RequestBody = json.toRequestBody("application/json".toMediaType())
