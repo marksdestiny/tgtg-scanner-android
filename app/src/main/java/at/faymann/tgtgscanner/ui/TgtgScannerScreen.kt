@@ -1,5 +1,7 @@
 package at.faymann.tgtgscanner.ui
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +16,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -23,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -73,12 +77,18 @@ fun TgtgScannerScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TgtgScannerItem(
     item: Bag,
     onNotificationEnabledChanged: (Int, Boolean) -> Unit
 ) {
+    val context = LocalContext.current
     Card(
+        onClick = {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://share.toogoodtogo.com/item/${item.id}"))
+            context.startActivity(intent)
+        },
         modifier = Modifier
             .padding(0.dp, 3.dp)
             .fillMaxWidth()

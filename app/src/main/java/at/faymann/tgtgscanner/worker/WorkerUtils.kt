@@ -19,8 +19,11 @@ package at.faymann.tgtgscanner.worker
 import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -85,6 +88,9 @@ fun showStockNotification(bag: Bag, context: Context) {
         context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager?
     notificationManager?.createNotificationChannel(channel)
 
+    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://share.toogoodtogo.com/item/${bag.id}"))
+    val pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE)
+
     // Create the notification
     val builder = NotificationCompat.Builder(context, STOCK_NOTIFICATION_CHANNEL_ID)
         .setSmallIcon(R.drawable.ic_launcher_foreground)
@@ -92,6 +98,7 @@ fun showStockNotification(bag: Bag, context: Context) {
         .setContentText(bag.name)
         .setPriority(NotificationCompat.PRIORITY_HIGH)
         .setVibrate(LongArray(0))
+        .setContentIntent(pendingIntent)
 
     // Show the notification if we have permissions
     if (ActivityCompat.checkSelfPermission(
