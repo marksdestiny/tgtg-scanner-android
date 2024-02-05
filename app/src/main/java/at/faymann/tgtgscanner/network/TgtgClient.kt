@@ -2,7 +2,7 @@ package at.faymann.tgtgscanner.network
 
 import android.util.Log
 import at.faymann.tgtgscanner.data.UserPreferencesRepository
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
@@ -52,20 +52,22 @@ class TgtgClient (
             requestBuilder.header("Cookie", "datadome=$dataDome")
         }
         val request = requestBuilder.build()
-        val response = withContext(Dispatchers.IO) {
-            client.newCall(request).execute()
-        }
-        if (response.body == null) {
-            throw Exception("Response body is empty.")
-        }
-        val responseString = response.body!!.string()
-        Log.d(TAG, responseString)
+        val response = client.newCall(request).execute()
 
-        val refreshResponseBody = Json.decodeFromString<RefreshResponseBody>(responseString)
-        userPreferencesRepository.updateRefreshToken(refreshResponseBody.refreshToken)
-        userPreferencesRepository.updateAccessToken(refreshResponseBody.accessToken)
+        // Make sure we save the tokens even if the coroutine is cancelled
+        withContext(NonCancellable) {
+            if (response.body == null) {
+                throw Exception("Response body is empty.")
+            }
+            val responseString = response.body!!.string()
+            Log.d(TAG, responseString)
 
-        parseDataDome(response)
+            val refreshResponseBody = Json.decodeFromString<RefreshResponseBody>(responseString)
+            userPreferencesRepository.updateRefreshToken(refreshResponseBody.refreshToken)
+            userPreferencesRepository.updateAccessToken(refreshResponseBody.accessToken)
+
+            parseDataDome(response)
+        }
     }
 
     private suspend fun parseDataDome(response: Response) {
@@ -94,10 +96,12 @@ class TgtgClient (
             .header("User-Agent", USER_AGENT)
             .header("Cookie", "datadome=$dataDome")
             .build()
-        val response = withContext(Dispatchers.IO) {
-            client.newCall(request).execute()
+        val response = client.newCall(request).execute()
+
+        // Make sure we save the data-dome cookie event if the coroutine is cancelled
+        withContext(NonCancellable) {
+            parseDataDome(response)
         }
-        parseDataDome(response)
 
         if (response.body == null) {
             throw Exception("Response body is empty.")
