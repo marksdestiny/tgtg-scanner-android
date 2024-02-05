@@ -99,6 +99,7 @@ fun showStockNotification(bag: Bag, context: Context) {
         .setPriority(NotificationCompat.PRIORITY_HIGH)
         .setVibrate(LongArray(0))
         .setContentIntent(pendingIntent)
+        .setAutoCancel(true)
 
     // Show the notification if we have permissions
     if (ActivityCompat.checkSelfPermission(
