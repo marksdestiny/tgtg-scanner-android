@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import androidx.datastore.preferences.preferencesDataStore
 import at.faymann.tgtgscanner.data.BagsRepository
+import at.faymann.tgtgscanner.data.Database
 import at.faymann.tgtgscanner.data.UserPreferencesRepository
 import at.faymann.tgtgscanner.data.WorkManagerTgtgScannerRepository
 
@@ -20,6 +21,6 @@ class TgtgScannerApplication : Application() {
         super.onCreate()
         workManagerTgtgScannerRepository = WorkManagerTgtgScannerRepository(this)
         userPreferencesRepository = UserPreferencesRepository(dataStore)
-        bagsRepository = BagsRepository()
+        bagsRepository = BagsRepository(Database.getDatabase(this).bagDao())
     }
 }

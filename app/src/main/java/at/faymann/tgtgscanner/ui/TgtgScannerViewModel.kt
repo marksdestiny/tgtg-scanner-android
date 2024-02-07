@@ -27,12 +27,11 @@ class TgtgScannerViewModel(
     private val isAutoCheckEnabled = workManagerTgtgScannerRepository.workInfo.map { info ->
         info.state == WorkInfo.State.ENQUEUED || info.state == WorkInfo.State.RUNNING || info.state == WorkInfo.State.BLOCKED
     }
-    private val lastUpdated = bagsRepository.lastUpdated
-    private val bags = bagsRepository.items
+    private val bags = bagsRepository.getBags()
     private val userPreferences = userPreferencesRepository.userPreferences
 
-    val uiState: StateFlow<TgtgScannerUiState> = combine(isAutoCheckEnabled, lastUpdated, bags, userPreferences) { check, update, bags, preferences ->
-            TgtgScannerUiState(check, preferences.autoCheckIntervalMinutes, bags, update)
+    val uiState: StateFlow<TgtgScannerUiState> = combine(isAutoCheckEnabled, bags, userPreferences) { check, bags, preferences ->
+            TgtgScannerUiState(check, preferences.autoCheckIntervalMinutes, bags, preferences.lastCheck)
         }.stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5000L),
@@ -59,11 +58,15 @@ class TgtgScannerViewModel(
     }
 
     fun setNotificationEnabled(bagId: Int, enabled: Boolean) {
-        bagsRepository.updateItemNotificationEnabled(bagId, enabled)
+        viewModelScope.launch {
+            bagsRepository.updateItemNotificationEnabled(bagId, enabled)
+        }
     }
 
     fun setAllNotificationsEnabled(enabled: Boolean) {
-        bagsRepository.updateAllItemNotificationsEnabled(enabled)
+        viewModelScope.launch {
+            bagsRepository.updateAllItemNotificationsEnabled(enabled)
+        }
     }
 
     companion object {

@@ -10,7 +10,6 @@ import at.faymann.tgtgscanner.network.TgtgClient
 import at.faymann.tgtgscanner.network.TgtgItem
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.update
 import java.time.Duration
 import java.time.LocalDateTime
 
@@ -27,13 +26,14 @@ class CheckBagsWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         application = (applicationContext as TgtgScannerApplication)
         client = TgtgClient(application.userPreferencesRepository)
 
-        if (application.bagsRepository.lastUpdated.value == null) {
+        if (application.userPreferencesRepository.userPreferences.first().lastCheck == null) {
             update()
         }
 
         while(!isStopped) {
-            val secondsBetweenUpdates = application.userPreferencesRepository.userPreferences.first().autoCheckIntervalMinutes * 60
-            val secondsSinceLastUpdate = Duration.between(application.bagsRepository.lastUpdated.value, LocalDateTime.now()).seconds
+            val currentPreferences = application.userPreferencesRepository.userPreferences.first()
+            val secondsBetweenUpdates = currentPreferences.autoCheckIntervalMinutes * 60
+            val secondsSinceLastUpdate = Duration.between(currentPreferences.lastCheck, LocalDateTime.now()).seconds
             delay((secondsBetweenUpdates - secondsSinceLastUpdate) * 1000L)
 
             update()
@@ -45,44 +45,52 @@ class CheckBagsWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         Log.d("CheckBagsWorker", "Checking bags...")
         val items = client.getItems()
 
-        application.bagsRepository.items.update { bags ->
-            checkBags(items, bags)
-        }
-        application.bagsRepository.updateLastUpdated(LocalDateTime.now())
+        val bags = application.bagsRepository.getBags().first()
+        val updatedBags = checkBags(items,bags)
+        application.bagsRepository.replace(updatedBags)
+
+        application.userPreferencesRepository.updateLastChecked(LocalDateTime.now())
     }
 
     private fun checkBags(items: List<TgtgItem>, bags: List<Bag>) : List<Bag> {
-        val newBags = bags.toMutableList()
+        val lastCheck = LocalDateTime.now()
+        val mutableBags = bags.toMutableList()
         for (item in items) {
             var bagIndex = -1
-            bags.forEachIndexed { index, bag ->
+            mutableBags.forEachIndexed { index, bag ->
                 if (bag.id == item.id)
                     bagIndex = index
             }
             if (bagIndex == -1) {
-                newBags.add(Bag(
+                mutableBags.add(Bag(
                     id = item.id,
                     name = item.name,
                     itemsAvailable = item.itemsAvailable,
                     notificationEnabled = true,
                     logoPictureUrl = item.logoPictureUrl,
-                    coverPictureUrl = item.coverPictureUrl
+                    coverPictureUrl = item.coverPictureUrl,
+                    lastCheck = lastCheck
                 ))
                 continue
             }
 
-            val bag = bags[bagIndex]
+            var bag = mutableBags[bagIndex]
             if (bag.itemsAvailable == 0 && item.itemsAvailable > 0 && bag.notificationEnabled) {
                 Log.d("CheckBagsWorker", "Sending notification...")
                 showStockNotification(bag, applicationContext)
                 Log.d("CheckBagsWorker", "Done.")
             }
-            if (bag.itemsAvailable != item.itemsAvailable) {
-                newBags[bagIndex] = bag.copy(itemsAvailable = item.itemsAvailable)
+            bag = if (bag.itemsAvailable != item.itemsAvailable) {
+                bag.copy(
+                    itemsAvailable = item.itemsAvailable,
+                    lastCheck = lastCheck
+                )
+            } else {
+                bag.copy(lastCheck = lastCheck)
             }
+            mutableBags[bagIndex] = bag
         }
-        newBags.sortByDescending { it.itemsAvailable }
-        return newBags
+        return mutableBags
     }
 
 }

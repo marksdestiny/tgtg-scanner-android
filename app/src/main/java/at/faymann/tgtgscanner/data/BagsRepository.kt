@@ -1,52 +1,29 @@
 package at.faymann.tgtgscanner.data
 
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
-import java.time.LocalDateTime
+import kotlinx.coroutines.flow.Flow
 
-class BagsRepository {
+class BagsRepository(
+    private val bagDao: BagDao
+) {
 
-    val items = MutableStateFlow<List<Bag>>(listOf())
+    fun getBags(): Flow<List<Bag>> = bagDao.getAllBags()
 
-    private val _lastUpdated = MutableStateFlow<LocalDateTime?>(null)
-
-    /**
-     * The date and time the bags have last been synchronized with the TGTG server.
-     */
-    val lastUpdated = _lastUpdated.asStateFlow()
-
-    fun updateLastUpdated(date: LocalDateTime) {
-        _lastUpdated.value = date
+    suspend fun replace(bags: List<Bag>) {
+        bagDao.deleteAll()
+        bagDao.insert(bags)
     }
 
     /**
      * Enable or disable notifications for a specific bag.
      */
-    fun updateItemNotificationEnabled(bagId: Int, enabled: Boolean) {
-        items.update { list ->
-            val mutableList = list.toMutableList()
-            var bagIndex = -1
-            list.forEachIndexed { index, bag ->
-                if (bag.id == bagId)
-                    bagIndex = index
-            }
-            if (bagIndex == -1) {
-                throw IllegalArgumentException("Illegal bag identifier.")
-            }
-            mutableList[bagIndex] = mutableList[bagIndex].copy(notificationEnabled = enabled)
-            return@update mutableList
-        }
+    suspend fun updateItemNotificationEnabled(bagId: Int, enabled: Boolean) {
+        bagDao.updateNotificationsEnabled(bagId, enabled)
     }
 
     /**
      * Enable or disable notifications all bags.
      */
-    fun updateAllItemNotificationsEnabled(enabled: Boolean) {
-        items.update { list ->
-            return@update list.map { bag ->
-                bag.copy(notificationEnabled = enabled)
-            }
-        }
+    suspend fun updateAllItemNotificationsEnabled(enabled: Boolean) {
+        bagDao.updateNotificationsEnabled(enabled)
     }
 }

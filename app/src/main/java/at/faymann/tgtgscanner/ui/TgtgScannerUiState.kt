@@ -7,5 +7,5 @@ data class TgtgScannerUiState(
     val isAutoCheckEnabled: Boolean = false,
     val autoCheckIntervalMinutes: Int = 1,
     val items: List<Bag> = listOf(),
-    val lastUpdated: LocalDateTime? = null
+    val lastCheck: LocalDateTime? = null
 )

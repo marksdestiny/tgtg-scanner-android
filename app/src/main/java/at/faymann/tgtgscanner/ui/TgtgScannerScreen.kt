@@ -37,6 +37,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import at.faymann.tgtgscanner.data.Bag
 import coil.compose.AsyncImage
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun TgtgScannerApp(
@@ -158,7 +160,7 @@ private fun TgtgScannerHeader(
     }
     Row {
         Text(text = "Last update: ")
-        Text(text = uiState.lastUpdated?.toString() ?: "Never")
+        Text(text = uiState.lastCheck?.format(DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss")) ?: "Never")
     }
     Row {
         Button(onClick = { onAllNotificationsEnabledChanged(true) }) {
@@ -180,14 +182,18 @@ fun TgtgScannerPreview() {
             itemsAvailable = 3,
             notificationEnabled = true,
             coverPictureUrl = "https://images.tgtg.ninja/itembulkimport/cover/8f47d323-2260-4324-a776-6562f6565328.jpg",
-            logoPictureUrl = "https://images.tgtg.ninja/storebulkimport/logo/26721/098003b3-8765-4fcd-9afa-f92763e172ad.png"),
+            logoPictureUrl = "https://images.tgtg.ninja/storebulkimport/logo/26721/098003b3-8765-4fcd-9afa-f92763e172ad.png",
+            lastCheck = LocalDateTime.now()
+        ),
         Bag(
             id = 2,
             name = "BILLA - Theodor Koerner-Str.122 (BILLA Backwarenkisterl vom Vortag)",
             itemsAvailable = 0,
             notificationEnabled = true,
             coverPictureUrl = "https://images.tgtg.ninja/itembulkimport/cover/88541/4de36459-19ba-4dc8-b820-d3cbd0d91864.jpg",
-            logoPictureUrl = "https://images.tgtg.ninja/storebulkimport/logo/87530/e786c77f-ea75-4333-9fcc-0a87ed1f3420.png")
+            logoPictureUrl = "https://images.tgtg.ninja/storebulkimport/logo/87530/e786c77f-ea75-4333-9fcc-0a87ed1f3420.png",
+            lastCheck = LocalDateTime.now()
+        )
     )
     TgtgScannerScreen(
         TgtgScannerUiState(

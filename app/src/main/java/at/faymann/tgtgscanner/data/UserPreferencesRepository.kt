@@ -20,7 +20,8 @@ data class UserPreferences (
     val accessToken: String,
     val accessTokenTtl: LocalDateTime?,
     val refreshToken: String,
-    val autoCheckIntervalMinutes: Int
+    val autoCheckIntervalMinutes: Int,
+    val lastCheck: LocalDateTime?
 )
 
 class UserPreferencesRepository(
@@ -34,6 +35,7 @@ class UserPreferencesRepository(
         val ACCESS_TOKEN_TTL = longPreferencesKey("access_token_ttl")
         val REFRESH_TOKEN = stringPreferencesKey("refresh_token")
         val AUTO_CHECK_INTERVAL = intPreferencesKey("auto_check_interval")
+        val LAST_CHECKED = longPreferencesKey("last_updated")
     }
 
     val userPreferences: Flow<UserPreferences> = dataStore.data
@@ -54,7 +56,11 @@ class UserPreferencesRepository(
             } else null
             val refreshToken = preferences[Keys.REFRESH_TOKEN] ?: "e30.eyJzdWIiOiI5NTMzNzgxMiIsImV4cCI6MTczODU5MjA4MCwidCI6IlVZeWNqTnpCUmVtOFhLVW5ySVdkaGc6MDowIn0.UvRhY5QmxymhWoM5prRVpmw0c7kvethKWHTaFSR_6YI"
             val autoCheckIntervalMinutes = preferences[Keys.AUTO_CHECK_INTERVAL] ?: 1
-            UserPreferences(userId, dataDome, accessToken, accessTokenTtl, refreshToken, autoCheckIntervalMinutes)
+            val lastCheckedLong = preferences[Keys.LAST_CHECKED]
+            val lastChecked = if(lastCheckedLong != null) {
+                LocalDateTime.ofEpochSecond(lastCheckedLong, 0, ZoneOffset.UTC)
+            } else null
+            UserPreferences(userId, dataDome, accessToken, accessTokenTtl, refreshToken, autoCheckIntervalMinutes, lastChecked)
         }
 
     suspend fun updateUserId(userId: Int) {
@@ -84,6 +90,12 @@ class UserPreferencesRepository(
     suspend fun updateDataDome(dataDome: String) {
         dataStore.edit { preferences ->
             preferences[Keys.DATA_DOME] = dataDome
+        }
+    }
+
+    suspend fun updateLastChecked(date: LocalDateTime) {
+        dataStore.edit { preferences ->
+            preferences[Keys.LAST_CHECKED] = date.toEpochSecond(ZoneOffset.UTC)
         }
     }
 }
