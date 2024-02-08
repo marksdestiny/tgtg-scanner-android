@@ -26,7 +26,7 @@ fun TgtgScannerApp(
     when (uiState) {
         is TgtgScannerUiState.Loading -> LoadingScreen(modifier = Modifier.fillMaxSize())
         is TgtgScannerUiState.Login -> LoginScreen(
-            uiState,
+            uiState = uiState,
             onEmailChanged = viewModel::updateEmail,
             onLogin = viewModel::login,
             modifier = Modifier.fillMaxSize()
@@ -36,9 +36,10 @@ fun TgtgScannerApp(
             modifier = Modifier.fillMaxSize()
         )
         is TgtgScannerUiState.Items -> ItemsScreen(
-            uiState,
+            uiState = uiState,
             onAutoCheckEnabledChanged = viewModel::setAutoCheckBagsEnabled,
-            onAutoCheckIntervalChanged = viewModel::setAutoCheckInterval,
+            onAutoCheckIntervalChanged = viewModel::updateAutoCheckInterval,
+            onAutoCheckIntervalDone = viewModel::checkAutoCheckInterval,
             onNotificationEnabledChanged = viewModel::setNotificationEnabled,
             onAllNotificationsEnabledChanged = viewModel::setAllNotificationsEnabled
         )

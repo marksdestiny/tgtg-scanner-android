@@ -21,7 +21,8 @@ sealed interface TgtgScannerUiState {
 
     data class Items (
         val isAutoCheckEnabled: Boolean = false,
-        val autoCheckIntervalMinutes: Int = 1,
+        val isAutoCheckIntervalInvalid: Boolean = false,
+        val autoCheckIntervalMinutes: String = "1",
         val items: List<Bag> = listOf(),
         val lastCheck: LocalDateTime? = null
     ) : TgtgScannerUiState

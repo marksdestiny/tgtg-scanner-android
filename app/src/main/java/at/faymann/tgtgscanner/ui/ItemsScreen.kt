@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -25,9 +26,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
@@ -41,7 +44,8 @@ import java.time.format.DateTimeFormatter
 fun ItemsScreen(
     uiState: TgtgScannerUiState.Items,
     onAutoCheckEnabledChanged: (Boolean) -> Unit,
-    onAutoCheckIntervalChanged: (Int) -> Unit,
+    onAutoCheckIntervalChanged: (String) -> Unit,
+    onAutoCheckIntervalDone: () -> Unit,
     onNotificationEnabledChanged: (Int, Boolean) -> Unit,
     onAllNotificationsEnabledChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier
@@ -52,10 +56,11 @@ fun ItemsScreen(
         LazyColumn(modifier = modifier) {
             item {
                 ItemsScreenHeader(
-                    uiState,
-                    onAutoCheckEnabledChanged,
-                    onAutoCheckIntervalChanged,
-                    onAllNotificationsEnabledChanged
+                    uiState = uiState,
+                    onAutoCheckEnabledChanged = onAutoCheckEnabledChanged,
+                    onAutoCheckIntervalChanged = onAutoCheckIntervalChanged,
+                    onAutoCheckIntervalDone = onAutoCheckIntervalDone,
+                    onAllNotificationsEnabledChanged = onAllNotificationsEnabledChanged
                 )
             }
             items(uiState.items) { item ->
@@ -124,9 +129,12 @@ private fun ItemsScreenCard(
 private fun ItemsScreenHeader(
     uiState: TgtgScannerUiState.Items,
     onAutoCheckEnabledChanged: (Boolean) -> Unit,
-    onAutoCheckIntervalChanged: (Int) -> Unit,
+    onAutoCheckIntervalChanged: (String) -> Unit,
+    onAutoCheckIntervalDone: () -> Unit,
     onAllNotificationsEnabledChanged: (Boolean) -> Unit
 ) {
+    val focusManager = LocalFocusManager.current
+
     Row(verticalAlignment = Alignment.CenterVertically) {
         Checkbox(
             checked = uiState.isAutoCheckEnabled,
@@ -134,16 +142,22 @@ private fun ItemsScreenHeader(
         )
         Text(text = "Auto check bags every ")
         TextField(
-            value = uiState.autoCheckIntervalMinutes.toString(),
-            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
+            value = uiState.autoCheckIntervalMinutes,
+            singleLine = true,
             onValueChange = { value ->
-                val minutes = value.trim().toIntOrNull()
-                if (minutes == null || minutes < 1) {
-                    onAutoCheckIntervalChanged(1)
-                } else {
-                    onAutoCheckIntervalChanged(minutes)
-                }
+                onAutoCheckIntervalChanged(value)
             },
+            keyboardActions = KeyboardActions (
+                onDone = {
+                    onAutoCheckIntervalDone()
+                    focusManager.clearFocus()
+                }
+            ),
+            keyboardOptions = KeyboardOptions.Default.copy(
+                keyboardType = KeyboardType.Number,
+                imeAction = ImeAction.Done
+            ),
+            isError = uiState.isAutoCheckIntervalInvalid,
             modifier = Modifier.width(70.dp)
         )
         Text(text = " minutes")
@@ -194,6 +208,7 @@ fun ItemsScreenPreview() {
         ),
         onAutoCheckIntervalChanged = {},
         onAutoCheckEnabledChanged = {},
+        onAutoCheckIntervalDone = {},
         onNotificationEnabledChanged = { _, _ ->  },
         onAllNotificationsEnabledChanged = {}
     )
