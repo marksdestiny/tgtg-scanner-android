@@ -11,15 +11,15 @@ import androidx.work.WorkManager
 import at.faymann.tgtgscanner.worker.CheckBagsWorker
 import kotlinx.coroutines.flow.mapNotNull
 
-const val CHECK_BAGS_WORK_NAME = "check_bags_work"
+private const val CHECK_BAGS_WORK_NAME = "check_bags_work"
 
 class WorkManagerTgtgScannerRepository(
-    private val context: Context
+    context: Context
 )  {
 
     private val workManager = WorkManager.getInstance(context)
 
-    val workInfo = workManager
+    val checkWorkInfo = workManager
         .getWorkInfosForUniqueWorkLiveData(CHECK_BAGS_WORK_NAME)
         .asFlow()
         .mapNotNull {
@@ -28,12 +28,6 @@ class WorkManagerTgtgScannerRepository(
 
     fun check() {
         Log.d("WorkManagerTgtgScannerRepository", "Check called.")
-        //val worker = PeriodicWorkRequestBuilder<CheckBagsWorker>(Duration.ofMinutes(1)).build()
-        //workManager.enqueueUniquePeriodicWork(
-        //    CHECK_BAGS_WORK_NAME,
-        //    ExistingPeriodicWorkPolicy.KEEP,
-        //    worker
-        //)
         val constrains = Constraints.Builder()
             .setRequiresBatteryNotLow(true)
             .setRequiredNetworkType(NetworkType.CONNECTED)
@@ -48,8 +42,8 @@ class WorkManagerTgtgScannerRepository(
         )
     }
 
-    fun cancel() {
+    fun cancelCheck() {
         Log.d("WorkManagerTgtgScannerRepository", "Cancel called.")
-        workManager.cancelAllWork()
+        workManager.cancelUniqueWork(CHECK_BAGS_WORK_NAME)
     }
 }

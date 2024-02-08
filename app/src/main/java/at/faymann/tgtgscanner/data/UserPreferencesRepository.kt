@@ -16,6 +16,7 @@ import java.time.ZoneOffset
 
 data class UserPreferences (
     val userId: Int,
+    val userEmail: String,
     val dataDome: String,
     val accessToken: String,
     val accessTokenTtl: LocalDateTime?,
@@ -29,6 +30,7 @@ class UserPreferencesRepository(
 ) {
 
     private object Keys {
+        val USER_EMAIL = stringPreferencesKey("user_email")
         val USER_ID = intPreferencesKey("user_id")
         val DATA_DOME = stringPreferencesKey("data_dome")
         val ACCESS_TOKEN = stringPreferencesKey("access_token")
@@ -47,27 +49,32 @@ class UserPreferencesRepository(
             }
         }
         .map { preferences ->
-            val userId = preferences[Keys.USER_ID]?.toInt() ?: 0
-            val dataDome = preferences[Keys.DATA_DOME] ?: ""
-            val accessToken = preferences[Keys.ACCESS_TOKEN] ?: "e30.eyJzdWIiOiI5NTMzNzgxMiIsImV4cCI6MTcwNzE0MjQ4MCwidCI6IlpGaWdjcFFVUjN5ejNLSDNobWRscWc6MDoxIn0.NCJUB0tn3daLrDc-N49G39mGNoY-soAtxF1LBP8ihs0"
-            val accessTokenTtlLong = preferences[Keys.ACCESS_TOKEN_TTL]
-            val accessTokenTtl = if(accessTokenTtlLong != null) {
-                LocalDateTime.ofEpochSecond(accessTokenTtlLong, 0, ZoneOffset.UTC)
-            } else null
-            val refreshToken = preferences[Keys.REFRESH_TOKEN] ?: "e30.eyJzdWIiOiI5NTMzNzgxMiIsImV4cCI6MTczODU5MjA4MCwidCI6IlVZeWNqTnpCUmVtOFhLVW5ySVdkaGc6MDowIn0.UvRhY5QmxymhWoM5prRVpmw0c7kvethKWHTaFSR_6YI"
-            val autoCheckIntervalMinutes = preferences[Keys.AUTO_CHECK_INTERVAL] ?: 1
-            val lastCheckedLong = preferences[Keys.LAST_CHECKED]
-            val lastChecked = if(lastCheckedLong != null) {
-                LocalDateTime.ofEpochSecond(lastCheckedLong, 0, ZoneOffset.UTC)
-            } else null
-            UserPreferences(userId, dataDome, accessToken, accessTokenTtl, refreshToken, autoCheckIntervalMinutes, lastChecked)
+            UserPreferences(
+                userId = preferences[Keys.USER_ID]?.toInt() ?: 0,
+                userEmail = preferences[Keys.USER_EMAIL] ?: "",
+                dataDome = preferences[Keys.DATA_DOME] ?: "",
+                accessToken = preferences[Keys.ACCESS_TOKEN] ?: "",
+                accessTokenTtl = preferences[Keys.ACCESS_TOKEN_TTL].toLocalDateTime(),
+                refreshToken = preferences[Keys.REFRESH_TOKEN] ?: "",
+                autoCheckIntervalMinutes = preferences[Keys.AUTO_CHECK_INTERVAL] ?: 1,
+                lastCheck = preferences[Keys.LAST_CHECKED].toLocalDateTime())
         }
 
-    suspend fun updateUserId(userId: Int) {
+    suspend fun updateUserData(userId: Int, accessToken: String, accessTokenTtl: LocalDateTime, refreshToken: String) {
         dataStore.edit { preferences ->
             preferences[Keys.USER_ID] = userId
+            preferences[Keys.ACCESS_TOKEN] = accessToken
+            preferences[Keys.ACCESS_TOKEN_TTL] = accessTokenTtl.toEpochSecond(ZoneOffset.UTC)
+            preferences[Keys.REFRESH_TOKEN] = refreshToken
         }
     }
+
+    suspend fun updateUserEmail(userEmail: String) {
+        dataStore.edit { preferences ->
+            preferences[Keys.USER_EMAIL] = userEmail
+        }
+    }
+
     suspend fun updateAutoCheckInterval(minutes: Int) {
         if (minutes < 1) {
             throw IllegalArgumentException("The auto check interval must be at least one minute.")
@@ -97,5 +104,13 @@ class UserPreferencesRepository(
         dataStore.edit { preferences ->
             preferences[Keys.LAST_CHECKED] = date.toEpochSecond(ZoneOffset.UTC)
         }
+    }
+}
+
+private fun Long?.toLocalDateTime(): LocalDateTime? {
+    return if(this != null) {
+        LocalDateTime.ofEpochSecond(this, 0, ZoneOffset.UTC)
+    } else {
+        null
     }
 }

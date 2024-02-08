@@ -21,8 +21,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -34,46 +32,34 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import at.faymann.tgtgscanner.data.Bag
 import coil.compose.AsyncImage
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 @Composable
-fun TgtgScannerApp(
-    viewModel: TgtgScannerViewModel = viewModel(
-        factory = TgtgScannerViewModel.Factory
-    )
-) {
-    val uiState by viewModel.uiState.collectAsState()
-    TgtgScannerScreen(
-        uiState,
-        onAutoCheckEnabledChanged = viewModel::setAutoCheckBagsEnabled,
-        onAutoCheckIntervalChanged = viewModel::setAutoCheckInterval,
-        onNotificationEnabledChanged = viewModel::setNotificationEnabled,
-        onAllNotificationsEnabledChanged = viewModel::setAllNotificationsEnabled
-    )
-}
-
-@Composable
-fun TgtgScannerScreen(
-    uiState: TgtgScannerUiState,
+fun ItemsScreen(
+    uiState: TgtgScannerUiState.Items,
     onAutoCheckEnabledChanged: (Boolean) -> Unit,
     onAutoCheckIntervalChanged: (Int) -> Unit,
     onNotificationEnabledChanged: (Int, Boolean) -> Unit,
     onAllNotificationsEnabledChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column (
+    Column(
         modifier = Modifier.padding(4.dp)
-    ){
-        LazyColumn ( modifier = modifier ) {
+    ) {
+        LazyColumn(modifier = modifier) {
             item {
-                TgtgScannerHeader(uiState, onAutoCheckEnabledChanged, onAutoCheckIntervalChanged, onAllNotificationsEnabledChanged)
+                ItemsScreenHeader(
+                    uiState,
+                    onAutoCheckEnabledChanged,
+                    onAutoCheckIntervalChanged,
+                    onAllNotificationsEnabledChanged
+                )
             }
             items(uiState.items) { item ->
-                TgtgScannerItem(item, onNotificationEnabledChanged)
+                ItemsScreenCard(item, onNotificationEnabledChanged)
             }
         }
     }
@@ -81,14 +67,17 @@ fun TgtgScannerScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TgtgScannerItem(
+private fun ItemsScreenCard(
     item: Bag,
     onNotificationEnabledChanged: (Int, Boolean) -> Unit
 ) {
     val context = LocalContext.current
     Card(
         onClick = {
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://share.toogoodtogo.com/item/${item.id}"))
+            val intent = Intent(
+                Intent.ACTION_VIEW,
+                Uri.parse("https://share.toogoodtogo.com/item/${item.id}")
+            )
             context.startActivity(intent)
         },
         modifier = Modifier
@@ -110,9 +99,10 @@ private fun TgtgScannerItem(
                         .width(50.dp)
                 )
                 if (item.itemsAvailable == 0) {
-                    Box(Modifier
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6F))
-                        .matchParentSize()
+                    Box(
+                        Modifier
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6F))
+                            .matchParentSize()
                     )
                 }
             }
@@ -131,8 +121,8 @@ private fun TgtgScannerItem(
 }
 
 @Composable
-private fun TgtgScannerHeader(
-    uiState: TgtgScannerUiState,
+private fun ItemsScreenHeader(
+    uiState: TgtgScannerUiState.Items,
     onAutoCheckEnabledChanged: (Boolean) -> Unit,
     onAutoCheckIntervalChanged: (Int) -> Unit,
     onAllNotificationsEnabledChanged: (Boolean) -> Unit
@@ -160,7 +150,10 @@ private fun TgtgScannerHeader(
     }
     Row {
         Text(text = "Last update: ")
-        Text(text = uiState.lastCheck?.format(DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss")) ?: "Never")
+        Text(
+            text = uiState.lastCheck?.format(DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss"))
+                ?: "Never"
+        )
     }
     Row {
         Button(onClick = { onAllNotificationsEnabledChanged(true) }) {
@@ -174,7 +167,7 @@ private fun TgtgScannerHeader(
 
 @Preview(showBackground = true)
 @Composable
-fun TgtgScannerPreview() {
+fun ItemsScreenPreview() {
     val items = listOf(
         Bag(
             id = 1,
@@ -195,8 +188,8 @@ fun TgtgScannerPreview() {
             lastCheck = LocalDateTime.now()
         )
     )
-    TgtgScannerScreen(
-        TgtgScannerUiState(
+    ItemsScreen(
+        TgtgScannerUiState.Items(
             items = items
         ),
         onAutoCheckIntervalChanged = {},
