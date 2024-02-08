@@ -96,6 +96,10 @@ class TgtgScannerViewModel(
     }
 
     fun login() {
+        if (!email.value.isValidEmail()) {
+            return
+        }
+
         viewModelScope.launch {
             userPreferencesRepository.updateUserEmail(email.value)
             isLoggingIn.value = true
