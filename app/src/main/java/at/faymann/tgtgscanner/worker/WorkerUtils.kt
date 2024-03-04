@@ -63,6 +63,7 @@ fun makeCheckForegroundInfo(context: Context) : ForegroundInfo {
         .setContentText(CHECK_NOTIFICATION_MESSAGE)
         .setPriority(NotificationCompat.PRIORITY_MIN)
         .setSilent(true)
+        .setOngoing(true)
         .build()
 
     return ForegroundInfo(CHECK_NOTIFICATION_ID, notification)
